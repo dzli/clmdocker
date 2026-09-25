@@ -1,0 +1,33 @@
+services:
+  clm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clm:latest
+    container_name: clm-service
+    restart: unless-stopped
+    ports:
+      - "8700:8700"  # CLM API & Web Playground
+      - "8090:8090"  # vLLM Embedder API (optional)
+    environment:
+      - MODE=full                     # Options: full | clm | vllm | mock
+      - PORT=8700                     # CLM API port
+      - VLLM_PORT=8090                # Internal vLLM embedder port
+      - MODEL=Qwen/Qwen3-8B           # Encoder backbone
+      - SERVED_MODEL_NAME=qwen3-8b
+      - GPU_MEMORY_UTILIZATION=0.85   # Sized for 10 GB RTX 3080 with 8GB CPU offload
+      - MAX_MODEL_LEN=2048            # Context length
+      - EXTRA_VLLM_ARGS=--cpu-offload-gb 8  # Offload weights to system RAM to prevent GPU OOM
+      # - CLM_API_KEY=your-secret-key        # Optional API key protection
+    volumes:
+      # Cache downloaded Hugging Face and CLM models on host so they persist
+      - ./cache/huggingface:/root/.cache/huggingface
+      - ./cache/clm:/root/.cache/clm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ipc: host  # Recommended for PyTorch shared memory / vLLM

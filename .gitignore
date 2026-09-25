@@ -1,0 +1,9 @@
+# Model/download cache populated at runtime (mounted into the container)
+cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+logs/
